@@ -9,18 +9,24 @@ function validReport() {
 function extractDataFromReport() {
     const report = {};
     
+    //Report
+    report.reportID = location.search.match(/view=(\d+)/)[1]; 
+    report.time = document.querySelector('table.vis'); 
+    
     const attacker = document.getElementById('attack_info_att');
     const defender = document.getElementById('attack_info_def');
-    
+
     // Atacante
     const attLinks = attacker.querySelectorAll('a');
-    report.attacker = attLinks[0].textContent;
-    report.attackerVillage = attLinks[1].textContent.match(/(\d+)\|(\d+)/)[0];
+    report.attackerName = attLinks[0].textContent;
+    report.attackerID = attLinks[0].href.match(/id=(\d+)/)[1];
+    report.attackerVillage = attLinks[1].textContent.match(/(\d+)\|(\d+)/g)[0];
     
     // Defensor
     const defLinks = defender.querySelectorAll('a');
-    report.defender = defLinks[0].textContent;
-    report.defenderVillage = defLinks[1].textContent.match(/(\d+)\|(\d+)/)[0];
+    report.defenderName = defLinks[0].textContent;
+    report.defenderID = defLinks[0].href.match(/id=(\d+)/)[1];
+    report.defenderVillage = defLinks[1].textContent.match(/(\d+)\|(\d+)/g)[0];
     
     console.log(report);
 }
