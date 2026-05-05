@@ -12,6 +12,10 @@ function extractDataFromReport() {
     //Report
     report.reportID = location.search.match(/view=(\d+)/)[1]; 
     report.time = document.querySelector('table.vis'); 
+    const timeCell = document.querySelectorAll('table .vis > tbody')[3]
+        .querySelectorAll('tr')[1]
+        .querySelector('td:nth-of-type(2)');
+    console.log(timeCell.innerText);
 
     // Attacker
     const attacker = document.getElementById('attack_info_att');
@@ -19,6 +23,8 @@ function extractDataFromReport() {
     report.attackerName = attLinks[0].textContent;
     report.attackerID = attLinks[0].href.match(/id=(\d+)/)[1];
     report.attackerVillage = attLinks[1].textContent.match(/(\d+)\|(\d+)/g)[0];
+
+    const attackerTroops = attacker.querySelectorAll('tr')[1].querySelectorAll('td');
     
     // Defender
     const defender = document.getElementById('attack_info_def');
