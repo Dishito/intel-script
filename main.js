@@ -22,6 +22,11 @@ function validReport() {
 
 function processReport() {
     const report = {attUnitsQ: {}, attUnitsL: {}, defUnitsQ: {}, defUnitsL: {}};
+
+    extractData(report);
+}
+
+function extractData(report) {
     const units = Object.values(game_data.units);
 
     //Report data 
@@ -79,6 +84,7 @@ function processReport() {
     });
 
     //Village data
+    const resoures = document.querySelector('#attack_spy_resources span').innerText;
 
     console.log(report);
 }
