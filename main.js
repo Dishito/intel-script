@@ -23,7 +23,12 @@ function validReport() {
 function processReport() {
     const report = {attUnitsQ: {}, attUnitsL: {}, defUnitsQ: {}, defUnitsL: {}};
 
+    report.reportID = location.search.match(/view=(\d+)/)[1]; 
+
+    //alreadySaved(report.reportID) ? return : null;
+    
     extractData(report);
+    //saveReport(report);
 }
 
 function extractData(report) {
@@ -31,9 +36,8 @@ function extractData(report) {
 
     //Report data 
     const timeCell = document.querySelectorAll('table.vis tbody')[3].rows[1].cells[1].innerText;
+    report.reportTime = timeCell;    
     
-    report.reportID = location.search.match(/view=(\d+)/)[1]; 
-    report.reportTime = timeCell;
 
     // Attacker data 
     const attacker = document.getElementById('attack_info_att');
@@ -84,9 +88,71 @@ function extractData(report) {
     });
 
     //Village data
-    const resoures = document.querySelector('#attack_spy_resources span').innerText;
+    const resoures = document.querySelector('#attack_spy_resources span')?.innerText;
 
     console.log(report);
 }
 
 main();
+
+
+
+
+
+
+const d = document.querySelector('#report_export_code');
+console.log(d.innerHTML);
+const b = d.innerHTML.match(/export](.*?)\[\/report_export\]/);
+console.log(b[1]);
+
+
+
+
+
+var htmlInforme = '<div><table><tbody><tr><td>Enviado: 13.05.26 03:20:43</td><td><img src="https://dses.innogamescdn.com/asset/6ce2ab95/graphic/unit/unit_axe.webp" class="" data-title="Soldado con hacha"></td></tr></tbody></table></div>';
+
+Dialog.show(
+    'mi_reporte',
+    htmlInforme,  // cadena HTML
+    null,
+    {
+        allow_close: true,
+        show_close_button: true,
+        auto_width: false,
+        overlay: false
+    }
+);
+
+
+
+
+
+
+
+
+const deleteRequest = indexedDB.deleteDatabase("inteliDB");
+
+deleteRequest.onsuccess = () => {
+    console.log("Se borró correctamente la base de datos.");
+}
+
+deleteRequest.onerror = (e) => {
+    console.error("Error al borrar la base de datos", e);
+}
+
+const openRequest = indexedDB.open("inteliDB", 1);
+
+openRequest.onupgradeneeded = (event) => {
+    const db = openRequest.result;
+
+    db.createObjectStore('reports',{keyPath: 'reportID'});
+    console.log(db);
+}
+
+openRequest.onsuccess = (event) => {
+    console.log("Open correcto.");
+}
+
+openRequest.onblocked = (event) => {
+    console.log("Error al abrir la base de datos. Recargue la pestaña.");
+}
