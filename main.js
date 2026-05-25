@@ -1,10 +1,12 @@
-function main() {
+const main = async () => {
+    const db = await initDB();
+
     const params = new URLSearchParams(window.location.search);
     const screen = params.get('screen');
 
     switch (screen) {
         case 'report':
-            validReport() ? processReport() : null;
+            if (validReport()) process(db);
             break;
         default:
             UI.ErrorMessage("Incorrect screen.", 5000);
@@ -12,7 +14,40 @@ function main() {
     }
 }
 
-function validReport() {
+const initDB = () => {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open("intelliDB", 1);
+
+        req.onupgradeneeded = () => {
+            const db = req.result;
+
+            if (!db.objectStoreNames.contains('reports')) { 
+                db.createObjectStore('reports', {keyPath: 'reportID'}); 
+            }
+            if (!db.objectStoreNames.contains('villages')) { 
+                db.createObjectStore('villages', {keyPath: 'villageID'}); 
+            }
+        };
+
+        req.onerror = () => {
+            console.error("Error", req.error);
+            reject(req.error);
+        };
+
+        req.onsuccess = () => {
+            const db = req.result;
+
+            db.onversionchange = () => {
+                db.close();
+                alert("La base de datos está desactualizada, por favor recargue la página.")
+            };
+
+            resolve(db);
+        };
+    });
+}
+
+const validReport = () => {
     if (!document.querySelector('.report_ReportAttack')) {
         UI.ErrorMessage("Please, open a valid battle report.", 5000);
         return false;
@@ -20,34 +55,50 @@ function validReport() {
     return true;
 }
 
-function processReport() {
-    const report = {attUnitsQ: {}, attUnitsL: {}, defUnitsQ: {}, defUnitsL: {}};
+const process = (db) => {
+    const report = {
+        reportID: null,
+        reportTime: null,
+        attName: null,  
+        attID: null,    
+        attVillage: null, 
+        attVillageID: null,
+        attUnitsQ: {},  
+        attUnitsL: {},
+        defName: null,  
+        defID: null,    
+        defVillage: null,
+        defVillageID: null,
+        defUnitsQ: {},  
+        defUnitsL: {},
+        buildings: {},
+        resources: null,
+    };
 
-    report.reportID = location.search.match(/view=(\d+)/)[1]; 
-
-    //alreadySaved(report.reportID) ? return : null;
+    report.reportID = location.search?.match(/view=(\d+)/)?.[1] ?? null;
     
     extractData(report);
-    //saveReport(report);
+    saveReport(report, db);
 }
 
-function extractData(report) {
+const extractData = (report) => {
     const units = Object.values(game_data.units);
 
     //Report data 
-    const timeCell = document.querySelectorAll('table.vis tbody')[3].rows[1].cells[1].innerText;
-    report.reportTime = timeCell;    
+    const timeRow = document.querySelectorAll('table.vis tbody')[3];
+    report.reportTime = timeRow?.rows[1]?.cells[1]?.innerText ?? null;    
     
 
-    // Attacker data 
+    // Attacker
     const attacker = document.getElementById('attack_info_att');
-    const attLinks = attacker.querySelectorAll('a');
+
+    const attLinks = attacker?.querySelectorAll('a');
+    report.attName = attLinks?.[0]?.textContent;
+    report.attID = attLinks?.[0]?.href.match(/id=(\d+)/)?.[1];
+    report.attVillage = attLinks?.[1]?.textContent.match(/(\d+)\|(\d+)/g)?.[0] ?? null;
+    
     const attUnitsQ = document.querySelector('#attack_info_att_units tr:nth-of-type(2)');
     const attUnitsL = document.querySelector('#attack_info_att_units tr:nth-of-type(3)');
-
-    report.attName = attLinks[0].textContent;
-    report.attID = attLinks[0].href.match(/id=(\d+)/)[1];
-    report.attVillage = attLinks[1].textContent.match(/(\d+)\|(\d+)/g)[0];
 
     units.forEach(unit => {
         const cell = attUnitsQ.querySelector(`td.unit-item-${unit}`);
@@ -93,6 +144,20 @@ function extractData(report) {
     console.log(report);
 }
 
+const saveReport = (report, db) => {
+    const tx = db.transaction('reports', 'readwrite');
+    const reports = tx.objectStore('reports');
+    const request = reports.add(report);
+
+    request.onsuccess = () => {
+        console.log("Report saved successfully.");
+    };
+
+    request.onerror = () => {
+        console.error("Error saving report", request.error);
+    };
+}
+
 main();
 
 
@@ -125,7 +190,32 @@ Dialog.show(
 
 
 
+const openRequest = indexedDB.open("inteliDB", 1);
 
+openRequest.onupgradeneeded = function() {
+    const db = openRequest.result;
+
+    if (!db.objectStoreNames.contains('reports')) { 
+        db.createObjectStore('reports', {keyPath: 'reportID'}); 
+    }
+
+    if (!db.objectStoreNames.contains('villages')) { 
+        db.createObjectStore('villages', {keyPath: 'villageID'}); 
+    }
+};
+
+openRequest.onerror = function() {
+  console.error("Error", openRequest.error);
+};
+
+openRequest.onsuccess = function() {
+    const db = openRequest.result;
+
+    db.onversionchange = function() {
+        db.close();
+        alert("La base de datos está desactualizada, por favor recargue la página.")
+    };
+};
 
 
 
